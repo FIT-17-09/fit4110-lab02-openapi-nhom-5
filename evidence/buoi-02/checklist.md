@@ -18,3 +18,7 @@
 - [ ] `negotiation-log.md` có tối thiểu 6 issue.
 - [ ] Có sign-off Provider, Consumer, Witness.
 - [ ] Đã hoàn thiện `VERSIONING.md` cho bài tập về nhà.
+
+Ghi chú Lab 02:
+- Lab 02 nối tiếp trực tiếp Lab 01: chuyển `service-boundary.md` thành `openapi.yaml`.
+- Xem bản đồ phụ thuộc đầy đủ tại `docs/dependency-map.md` để chọn cặp đàm phán.
