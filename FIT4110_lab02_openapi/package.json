@@ -1,0 +1,8 @@
+{
+  "name": "fit4110-lab02-template",
+  "version": "1.0.0",
+  "scripts": {
+    "lint": "npx @stoplight/spectral lint openapi.yaml -r campus-spectral.yaml"
+  },
+  "devDependencies": {}
+}

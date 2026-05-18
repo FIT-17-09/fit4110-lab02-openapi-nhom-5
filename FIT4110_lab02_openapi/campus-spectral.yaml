@@ -1,0 +1,2 @@
+# Minimal spectral ruleset placeholder
+extends: "./../campus-spectral.yaml"
