@@ -1,34 +1,34 @@
-# Provider Analysis - Pair 05 IoT Ingestion to Core Business
+# Provider Analysis - Pair 03 Core Business to Access Gate
 
-- Pair: #5 IoT Ingestion -> Core Business
+- Pair: #3 Core Business -> Access Gate
 - Product: Smart Campus Operations Platform
-- Provider service: IoT Ingestion (event producer)
-- Consumer service: Core Business (event consumer)
+- Provider service: Access Gate
+- Consumer service: Core Business
 - Author: Group 5
 - Date: 2026-05-18
 
 ---
 
-## 1. Main Resources / Events
+## 1. Main Resources
 
-| Resource or event | Description | Required fields | Optional fields |
+| Resource | Description | Required fields | Optional fields |
 |---|---|---|---|
-| `sensor.reading.created` | Normal sensor reading published by IoT Ingestion. | `eventId`, `eventType`, `deviceId`, `sensorType`, `value`, `unit`, `quality`, `occurredAt`, `correlationId`, `idempotencyKey`, `source` | `locationId`, `floor` |
-| `sensor.threshold.exceeded` | Sensor reading crossed a policy threshold and needs Core Business action. | `eventId`, `eventType`, `deviceId`, `sensorType`, `value`, `unit`, `thresholdId`, `thresholdValue`, `severity`, `occurredAt`, `correlationId`, `idempotencyKey`, `source` | `locationId`, `policyHint` |
-| `Problem` | Standard error body for mock REST validation. | `type`, `title`, `status` | `detail`, `instance`, `errors` |
+| `AccessLog` | Log lịch sử quẹt thẻ tại cổng ra/vào. | `logId`, `cardId`, `gateId`, `direction`, `timestamp`, `status` | `operatorNote`, `reasonCode` |
+| `GateStatus` | Trạng thái hiện tại của cổng. | `gateId`, `status`, `lastHeartbeat` | `location`, `activeAlarm` |
+| `CardInfo` | Thông tin thẻ truy cập. | `cardId`, `ownerId`, `cardStatus` | `expiresAt`, `cardType` |
+| `Problem` | Chuẩn lỗi API theo Problem Details. | `type`, `title`, `status` | `detail`, `instance` |
 
 ---
 
-## 2. Expected Contract Surface
+## 2. Expected API Surface
 
-| Method / mechanism | Path or topic | Purpose | Consumer uses it when |
+| Method | Path | Purpose | Consumer uses it when |
 |---|---|---|---|
-| Queue publish | `sensor.events.v1` | Primary async delivery for both event types. | IoT Ingestion has a new reading or threshold breach. |
-| Queue dead-letter | `sensor.events.dlq.v1` | Store messages that Core Business cannot process after retries. | Message is invalid, stale, or repeatedly failing. |
-| POST | `/sensor-events` | Lab 02 Prism mock projection for event validation. | Demonstrating payload acceptance before Lab 03 AsyncAPI. |
-| GET | `/sensor-events/{eventId}` | Mock status lookup for accepted events. | Checking idempotency and processing status. |
-| GET | `/sensor-events/recent` | Mock recent-event inspection. | Reviewing evidence and sample responses. |
-| GET | `/event-contract` | Published metadata for topic, producer, consumer, retry and DLQ assumptions. | Confirming the negotiated v1.0 contract. |
+| GET | `/access/logs/recent` | Trả về danh sách log quẹt thẻ gần nhất. | Core Business cần audit realtime hoặc kiểm tra sự kiện gần đây. |
+| GET | `/access/logs/{logId}` | Lấy chi tiết một access log. | Core Business cần truy vết một sự kiện cụ thể. |
+| GET | `/gates/{gateId}/status` | Trả về trạng thái hiện tại của gate. | Kiểm tra gate online/offline hoặc lỗi thiết bị. |
+| GET | `/cards/{cardId}` | Trả về trạng thái thẻ truy cập. | Kiểm tra thẻ còn hiệu lực hoặc bị khóa. |
+| GET | `/health` | Health check service. | Monitoring hoặc Prism mock evidence. |
 
 ---
 
@@ -36,32 +36,32 @@
 
 | Status | Situation | Expected response body |
 |---:|---|---|
-| 400 | JSON does not match schema, for example invalid `deviceId`. | `Problem` |
-| 401 | Missing or invalid Bearer token on mock REST endpoints. | `Problem` |
-| 403 | Token is valid but lacks event publish/read scope. | `Problem` |
-| 404 | `eventId` is not known by the mock status endpoint. | `Problem` |
-| 409 | Same `idempotencyKey` appears with a different `eventId`. | `Problem` |
-| 422 | Payload is syntactically valid but violates event business rules. | `Problem` |
-| 500 | Core Business cannot enqueue or inspect the event. | `Problem` |
+| 400 | Request sai định dạng hoặc path param không hợp lệ. | `Problem` |
+| 401 | Thiếu hoặc sai Bearer token. | `Problem` |
+| 403 | Token hợp lệ nhưng không đủ quyền truy cập log/card. | `Problem` |
+| 404 | Không tìm thấy log, gate hoặc card. | `Problem` |
+| 409 | Dữ liệu gate đang cập nhật hoặc conflict trạng thái. | `Problem` |
+| 422 | Request đúng JSON nhưng vi phạm rule nghiệp vụ. | `Problem` |
+| 500 | Lỗi nội bộ Access Gate hoặc downstream timeout. | `Problem` |
 
 ---
 
 ## 4. Provider Assumptions
 
-- IoT Ingestion is the source of truth for `deviceId`, `sensorType`, `value`, `unit`, `quality`, and `occurredAt`.
-- `eventId` is globally unique and generated before publication.
-- `idempotencyKey` is stable for retries of the same device, timestamp, and metric.
-- Delivery is at-least-once; Core Business must deduplicate by `idempotencyKey`.
-- Events older than 15 minutes may be ignored by Core Business unless the event type is `sensor.threshold.exceeded` with severity `CRITICAL`.
-- `locationId` can be null when a device has not yet been mapped to a campus room.
+- `direction` sử dụng enum `IN` và `OUT`.
+- Access log được lưu tối thiểu 30 ngày phục vụ audit.
+- `cardStatus` hỗ trợ các trạng thái `ACTIVE`, `BLOCKED`, `EXPIRED`.
+- `operatorNote` có thể null nếu log được tạo tự động.
+- `timestamp` dùng chuẩn UTC ISO-8601.
+- Core Business chỉ đọc dữ liệu, không được sửa log hoặc trạng thái gate.
 
 ---
 
 ## 5. Questions For Consumer
 
-1. Which sensor types should trigger Core Business policy evaluation in v1.0?
-2. How long should Core Business keep idempotency keys for deduplication?
-3. Should a missing `locationId` block policy evaluation or be accepted with a warning?
+1. Core Business có cần filter log theo khoảng thời gian trong v1.0 không?
+2. Consumer có cần pagination cho `/access/logs/recent` không?
+3. Card bị `EXPIRED` có xử lý giống `BLOCKED` không?
 
 ---
 
@@ -69,7 +69,7 @@
 
 | Risk | Impact | Mitigation |
 |---|---|---|
-| Sensor units are interpreted differently. | Core Business may evaluate thresholds incorrectly. | Restrict `unit` to the enum in `openapi.yaml` and document conversion rules in Lab 03. |
-| Duplicate delivery is not handled consistently. | Alerts may be created more than once. | Require `idempotencyKey` and mark delivery as at-least-once. |
-| Event timestamps are delayed or clock-skewed. | Core Business may process stale readings. | Use `occurredAt` and agree on a 15-minute freshness rule. |
-| Device location is unknown. | Policy evaluation may miss building or room context. | Allow nullable `locationId` and require follow-up enrichment in Core Business. |
+| Direction dùng khác enum giữa hai nhóm. | Consumer parse sai dữ liệu. | Chốt enum `IN/OUT` trong `openapi.yaml`. |
+| Card status không thống nhất. | Sai quyết định policy hoặc audit. | Chuẩn hóa enum trạng thái thẻ. |
+| Access log quá lớn. | Timeout hoặc response chậm. | Giới hạn số lượng log recent và hỗ trợ pagination sau này. |
+| Gate offline nhưng không cập nhật trạng thái kịp. | Core Business hiểu sai trạng thái cổng. | Bắt buộc có `lastHeartbeat`. |

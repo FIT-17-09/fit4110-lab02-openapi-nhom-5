@@ -1,55 +1,48 @@
-# Event Contract sơ bộ — dùng cho dependency Queue async
-
-> File này chỉ dùng cho các cặp Queue async ở Lab 02 để ghi nhận thỏa thuận ban đầu. Đặc tả chi tiết bằng AsyncAPI sẽ chuyển sang Lab 03.
+# Event Contract sơ bộ — Pair 09 Access Gate to Analytics
 
 ## 1. Thông tin dependency
 
-- Dependency số:
-- Producer:
-- Consumer:
+- Dependency số: 09
+- Producer: Access Gate
+- Consumer: Analytics
 - Cơ chế: Queue async
-- Event/topic dự kiến:
-- Người ghi:
-- Ngày:
+- Event/topic dự kiến: `access.events.v1`
+- Người ghi: Group 5
+- Ngày: 2026-05-18
 
 ## 2. Mục đích nghiệp vụ
 
-Mô tả ngắn event này sinh ra khi nào và consumer dùng để làm gì.
+Access Gate publish log ra/vào để Analytics thống kê lưu lượng, giờ cao điểm và tỷ lệ deny.
 
 ## 3. Event name / topic
 
 | Mục | Giá trị |
 |---|---|
-| Event name | `<domain.event.action>` |
-| Topic/queue | `<topic-name>` |
-| Producer | `<service>` |
-| Consumer | `<service>` |
+| Event name | `access.log.created` |
+| Topic/queue | `access.events.v1` |
+| Producer | `Access Gate` |
+| Consumer | `Analytics` |
+
+| Mục | Giá trị |
+|---|---|
+| Event name | `access.denied` |
+| Topic/queue | `access.events.v1` |
+| Producer | `Access Gate` |
+| Consumer | `Analytics` |
 
 ## 4. Payload tối thiểu
 
 ```json
 {
   "eventId": "uuid",
-  "eventType": "domain.event.created",
-  "occurredAt": "2026-05-10T08:30:00Z",
+  "eventType": "access.log.created",
+  "occurredAt": "2026-05-18T08:30:00Z",
   "correlationId": "uuid",
-  "source": "service-name",
-  "data": {}
+  "source": "access-gate",
+  "data": {
+    "cardId": "RFID-001",
+    "gateId": "GATE-01",
+    "direction": "IN",
+    "status": "ALLOW"
+  }
 }
-```
-
-## 5. Ràng buộc cần thống nhất
-
-| Vấn đề | Quyết định tạm thời |
-|---|---|
-| Event id có bắt buộc không? | Có |
-| Có cần correlationId không? | Có |
-| Có cho phép gửi trùng event không? | Có thể, consumer phải idempotent |
-| Retry khi lỗi | Ghi rõ ở Lab 03 |
-| Dead-letter queue | Ghi rõ ở Lab 03 |
-
-## 6. Issue chuyển sang Lab 03
-
-1. ...
-2. ...
-3. ...

@@ -1,39 +1,29 @@
-# Contract Versioning
+# API Versioning Strategy
 
 ## Current Version
 
-- Contract version: `1.0.0`
-- Pair: #5 IoT Ingestion -> Core Business
-- Scope: sensor event payload, REST mock projection, Problem Details error model, and Lab 02 negotiation decisions.
-- Status: signed off for Lab 02 mock validation.
+- API Version: v1.0.0
+- OpenAPI Version: 3.1.0
 
-## Versioning Rule
+---
 
-This contract follows semantic versioning:
+## Versioning Rules
 
-| Change type | Version bump | Examples |
-|---|---|---|
-| Breaking change | Major | Rename `eventType`, remove a required field, change enum meaning, change idempotency semantics. |
-| Backward-compatible feature | Minor | Add an optional field, add a new event type, add a new response example. |
-| Documentation or example fix | Patch | Clarify descriptions, fix typos, improve examples without changing schema behavior. |
+- Breaking changes require a new major version.
+- Non-breaking additions use a minor version update.
+- Bug fixes and documentation updates use patch versions.
 
-## Compatibility Policy
+Example:
 
-- Consumers must accept unknown optional fields only after the Lab 03 AsyncAPI compatibility rule is finalized.
-- Required fields in v1.0 cannot be removed without a major version bump.
-- New event types require a minor version bump and an updated discriminator mapping.
-- Queue topic versioning uses the topic suffix, for example `sensor.events.v1`.
-- Problem Details fields remain stable across all v1.x versions.
+- v1.0.0 -> Initial contract
+- v1.1.0 -> Add optional fields/endpoints
+- v2.0.0 -> Breaking schema changes
 
-## Change Log
+---
 
-| Version | Date | Changes |
-|---|---|---|
-| 1.0.0 | 2026-05-18 | Initial Lab 02 contract for `sensor.reading.created` and `sensor.threshold.exceeded`, with Prism mock paths and negotiated retry/idempotency assumptions. |
+## REST Versioning
 
-## Lab 03 Follow-Up
+REST endpoints use URI versioning if needed in future:
 
-- Convert the event contract to AsyncAPI.
-- Define broker, retry count, retry interval, and DLQ payload.
-- Decide how long Core Business stores idempotency keys.
-- Add schema examples for DLQ remediation events.
+```text
+/api/v1/access/check

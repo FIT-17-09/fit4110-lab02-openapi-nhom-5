@@ -1,3 +1,6 @@
-﻿35ab524 add deadline
+b3535b6 submit: lab02 openapi contract evidence
+4d7fe31 Scaffold FIT4110_lab02_openapi template and docs
+a167b0b Add dependency map and Lab02 checklist note
+35ab524 add deadline
 a4ee739 Revise dependency map and pairing matrix documentation
 41a4b1e Initial commit

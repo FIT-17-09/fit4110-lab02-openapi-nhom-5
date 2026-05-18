@@ -1,889 +1,576 @@
 openapi: 3.1.0
-info:
-  title: Smart Campus - IoT Sensor Event Contract
-  version: 1.0.0
-  description: |
-    Lab 02 contract for dependency pair 05: IoT Ingestion publishes sensor
-    events and Core Business consumes them for policy evaluation and anomaly
-    handling.
 
-    The business integration is queue async. This OpenAPI document defines the
-    REST mock projection used in Lab 02 so Spectral and Prism can validate the
-    negotiated payload, error model, examples, and consumer/provider agreement
-    before the AsyncAPI contract is written in Lab 03.
+info:
+  title: Smart Campus API Contract
+  version: 1.0.0
+  description: >
+    API contract cho Access Gate và Core Business
+    trong Smart Campus Operations Platform.
   contact:
-    name: FIT4110 Group 5
-    email: fit4110-nhom-5@example.edu.vn
+    name: Nhom 5
+    email: nhom5@gmail.com
 servers:
   - url: http://localhost:4010
-    description: Prism mock server
-  - url: https://api.campus.local/iot-core
-    description: Smart Campus class network placeholder
+    description: Prism Mock Server
+
 tags:
+  - name: access
+  - name: policy
   - name: health
-    description: Service health checks
-  - name: sensor-events
-    description: Sensor event intake and inspection
-  - name: contract
-    description: Negotiated event contract metadata
+  - name: access-logs
+  - name: gates
+  - name: cards
+
 security:
   - bearerAuth: []
-paths:
-  /health:
-    get:
-      operationId: getHealth
-      summary: Check mock service health
-      description: Returns a minimal health document for the Prism mock service.
-      tags: [health]
-      security: []
-      responses:
-        '200':
-          description: Mock service is available.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HealthStatus'
-              examples:
-                ok:
-                  value:
-                    status: ok
-                    service: iot-core-sensor-contract
-                    time: '2026-05-18T01:30:00Z'
 
-  /sensor-events:
+paths:
+
+  /access/check:
     post:
-      operationId: publishSensorEvent
-      summary: Publish a sensor event to Core Business
-      description: |
-        Mock REST projection for the async queue contract. IoT Ingestion uses
-        this operation in Lab 02 to validate the envelope and payload that will
-        later be published to the `sensor.events.v1` topic.
-      tags: [sensor-events]
+      operationId: checkAccess
+      summary: Check access permission
+      description: >
+        Access Gate gửi cardId và gateId
+        để Core Business quyết định mở cổng.
+      tags:
+        - access
+
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SensorEvent'
-            examples:
-              readingCreated:
-                value:
-                  eventType: sensor.reading.created
-                  eventId: 550e8400-e29b-41d4-a716-446655440001
-                  deviceId: SENSOR-101
-                  sensorType: temperature
-                  value: 38.6
-                  unit: celsius
-                  locationId: B1-F02-R204
-                  floor: F02
-                  quality: NORMAL
-                  occurredAt: '2026-05-18T01:25:00Z'
-                  correlationId: 550e8400-e29b-41d4-a716-446655440101
-                  idempotencyKey: SENSOR-101:2026-05-18T01:25:00Z:temperature
-                  source: iot-ingestion
-              thresholdExceeded:
-                value:
-                  eventType: sensor.threshold.exceeded
-                  eventId: 550e8400-e29b-41d4-a716-446655440002
-                  deviceId: SENSOR-203
-                  sensorType: smoke
-                  value: 1
-                  unit: boolean
-                  locationId: B2-F01-LAB
-                  thresholdId: smoke-default-v1
-                  thresholdValue: 0
-                  severity: CRITICAL
-                  policyHint: evacuate-zone
-                  occurredAt: '2026-05-18T01:26:00Z'
-                  correlationId: 550e8400-e29b-41d4-a716-446655440102
-                  idempotencyKey: SENSOR-203:2026-05-18T01:26:00Z:smoke
-                  source: iot-ingestion
+              $ref: '#/components/schemas/AccessCheckRequest'
+            example:
+              cardId: RFID-001
+              gateId: GATE-01
+
       responses:
-        '202':
-          description: Event accepted by the Core Business intake boundary.
-          headers:
-            Location:
-              description: URI for checking the accepted event status.
-              schema:
-                type: string
-                format: uri-reference
+        '200':
+          description: Access decision result
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SensorEventAccepted'
-              examples:
-                accepted:
-                  value:
-                    eventId: 550e8400-e29b-41d4-a716-446655440001
-                    status: ACCEPTED
-                    acceptedAt: '2026-05-18T01:25:02Z'
-                    idempotencyKey: SENSOR-101:2026-05-18T01:25:00Z:temperature
-                    queueTopic: sensor.events.v1
-                    retryAfterSeconds: null
+                $ref: '#/components/schemas/AccessDecision'
+
         '400':
           $ref: '#/components/responses/BadRequest'
+
         '401':
           $ref: '#/components/responses/Unauthorized'
+
         '403':
           $ref: '#/components/responses/Forbidden'
+
         '409':
           $ref: '#/components/responses/Conflict'
+
         '422':
           $ref: '#/components/responses/UnprocessableEntity'
+
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /sensor-events/recent:
+  /policies/access/{policyId}:
     get:
-      operationId: listRecentSensorEvents
-      summary: List recently accepted sensor events
-      description: |
-        Returns a cursor-paginated view of recent events for mock verification
-        and consumer debugging. Production queue delivery remains asynchronous.
-      tags: [sensor-events]
-      parameters:
-        - $ref: '#/components/parameters/Cursor'
-        - $ref: '#/components/parameters/Limit'
-        - $ref: '#/components/parameters/SensorType'
-        - $ref: '#/components/parameters/LocationId'
-      responses:
-        '200':
-          description: Recent sensor events.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SensorEventPage'
-              examples:
-                firstPage:
-                  value:
-                    items:
-                      - eventId: 550e8400-e29b-41d4-a716-446655440001
-                        eventType: sensor.reading.created
-                        deviceId: SENSOR-101
-                        sensorType: temperature
-                        locationId: B1-F02-R204
-                        severity: null
-                        occurredAt: '2026-05-18T01:25:00Z'
-                        status: ACCEPTED
-                    nextCursor: null
-                    hasMore: false
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+      operationId: getPolicy
+      summary: Get access policy
+      description: >
+        Lấy policy truy cập theo policyId.
+      tags:
+        - policy
 
-  /sensor-events/{eventId}:
-    get:
-      operationId: getSensorEventStatus
-      summary: Get sensor event processing status
-      description: |
-        Lets IoT Ingestion check whether Core Business has accepted, deduplicated,
-        or rejected a specific event. This endpoint is a mock support surface for
-        Lab 02 and is not the primary queue delivery path.
-      tags: [sensor-events]
       parameters:
-        - $ref: '#/components/parameters/EventId'
+        - name: policyId
+          in: path
+          required: true
+          schema:
+            type: string
+
       responses:
         '200':
-          description: Sensor event processing status.
+          description: Policy found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SensorEventStatus'
-              examples:
-                accepted:
-                  value:
-                    eventId: 550e8400-e29b-41d4-a716-446655440001
-                    status: PROCESSED
-                    receivedAt: '2026-05-18T01:25:02Z'
-                    processedAt: '2026-05-18T01:25:05Z'
-                    result: POLICY_OK
-                    duplicate: false
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
+                $ref: '#/components/schemas/AccessPolicy'
+
         '404':
           $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
 
-  /event-contract:
+  /decisions/{decisionId}:
     get:
-      operationId: getSensorEventContract
-      summary: Get negotiated sensor event contract metadata
-      description: |
-        Returns the negotiated event names, topic, producer, consumer, and
-        delivery assumptions recorded during Lab 02.
-      tags: [contract]
+      operationId: getDecision
+      summary: Get access decision
+      description: >
+        Trả về lịch sử quyết định allow hoặc deny.
+      tags:
+        - access
+
+      parameters:
+        - name: decisionId
+          in: path
+          required: true
+          schema:
+            type: string
+
       responses:
         '200':
-          description: Event contract metadata.
+          description: Decision history
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EventContract'
-              examples:
-                v1:
-                  value:
-                    version: 1.0.0
-                    topic: sensor.events.v1
-                    producer: iot-ingestion
-                    consumer: core-business
-                    events:
-                      - eventType: sensor.reading.created
-                        purpose: New sensor reading for policy evaluation.
-                      - eventType: sensor.threshold.exceeded
-                        purpose: Sensor value crossed a negotiated threshold.
-                    retryPolicy: at-least-once
-                    deadLetterTopic: sensor.events.dlq.v1
+                $ref: '#/components/schemas/AccessDecision'
+
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /health:
+    get:
+      operationId: getHealth
+      summary: Health check
+      description: >
+        Kiểm tra trạng thái hoạt động của service.
+      security: []
+      tags:
+        - health
+
+      responses:
+        '200':
+          description: Service running
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthStatus'
+
+  /access/logs/recent:
+    get:
+      operationId: getRecentAccessLogs
+      summary: Get recent access logs
+      description: >
+        Core Business lấy danh sách log quẹt thẻ gần đây
+        từ Access Gate để audit.
+      tags:
+        - access-logs
+
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+
+      responses:
+        '200':
+          description: Recent access logs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AccessLog'
+
         '401':
           $ref: '#/components/responses/Unauthorized'
+
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
         '500':
           $ref: '#/components/responses/InternalServerError'
 
+  /access/logs/{logId}:
+    get:
+      operationId: getAccessLogById
+      summary: Get access log detail
+      description: >
+        Lấy chi tiết log quẹt thẻ theo logId.
+      tags:
+        - access-logs
+
+      parameters:
+        - name: logId
+          in: path
+          required: true
+          schema:
+            type: string
+
+      responses:
+        '200':
+          description: Access log detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessLog'
+
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gates/{gateId}/status:
+    get:
+      operationId: getGateStatus
+      summary: Get gate status
+      description: >
+        Truy vấn trạng thái hiện tại của gate.
+      tags:
+        - gates
+
+      parameters:
+        - name: gateId
+          in: path
+          required: true
+          schema:
+            type: string
+
+      responses:
+        '200':
+          description: Gate status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GateStatus'
+
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /cards/{cardId}:
+    get:
+      operationId: getCardInformation
+      summary: Get card information
+      description: >
+        Truy vấn thông tin card từ Access Gate.
+      tags:
+        - cards
+
+      parameters:
+        - name: cardId
+          in: path
+          required: true
+          schema:
+            type: string
+
+      responses:
+        '200':
+          description: Card information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CardInfo'
+
+        '404':
+          $ref: '#/components/responses/NotFound'
+
 components:
+
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
 
-  parameters:
-    EventId:
-      name: eventId
-      in: path
-      required: true
-      description: UUID of the sensor event.
-      schema:
-        type: string
-        format: uuid
-    Cursor:
-      name: cursor
-      in: query
-      required: false
-      description: Opaque cursor for the next page.
-      schema:
-        type: [string, 'null']
-        minLength: 1
-        maxLength: 200
-    Limit:
-      name: limit
-      in: query
-      required: false
-      description: Maximum number of items per page.
-      schema:
-        type: integer
-        minimum: 1
-        maximum: 100
-        default: 20
-    SensorType:
-      name: sensorType
-      in: query
-      required: false
-      description: Optional sensor type filter.
-      schema:
-        $ref: '#/components/schemas/SensorType'
-    LocationId:
-      name: locationId
-      in: query
-      required: false
-      description: Optional campus location filter.
-      schema:
-        type: [string, 'null']
-        minLength: 2
-        maxLength: 80
-
   schemas:
+
+    AccessCheckRequest:
+      type: object
+      required:
+        - cardId
+        - gateId
+
+      properties:
+        cardId:
+          type: string
+          example: RFID-001
+
+        gateId:
+          type: string
+          example: GATE-01
+
+        timestamp:
+          type: string
+          format: date-time
+
+    AccessDecision:
+      oneOf:
+        - $ref: '#/components/schemas/AccessGranted'
+        - $ref: '#/components/schemas/AccessDenied'
+
+      discriminator:
+        propertyName: decisionType
+
+        mapping:
+          ALLOW: '#/components/schemas/AccessGranted'
+          DENY: '#/components/schemas/AccessDenied'
+
+    AccessGranted:
+      type: object
+
+      required:
+        - decisionType
+        - decisionId
+        - allow
+
+      properties:
+        decisionType:
+          type: string
+          const: ALLOW
+
+        decisionId:
+          type: string
+          format: uuid
+
+        allow:
+          type: boolean
+          example: true
+
+        policyId:
+          type: string
+
+        expiresAt:
+          type:
+            - string
+            - "null"
+          format: date-time
+          example: null
+
+    AccessDenied:
+      type: object
+
+      required:
+        - decisionType
+        - decisionId
+        - reasonCode
+
+      properties:
+        decisionType:
+          type: string
+          const: DENY
+
+        decisionId:
+          type: string
+          format: uuid
+
+        allow:
+          type: boolean
+          example: false
+
+        reasonCode:
+          type: string
+          example: CARD_BLOCKED
+
+    AccessPolicy:
+      type: object
+
+      required:
+        - policyId
+        - role
+
+      properties:
+        policyId:
+          type: string
+          example: POLICY-01
+
+        role:
+          type: string
+          example: Student
+
+        accessLevel:
+          type: string
+          example: NORMAL
+
+    AccessLog:
+      type: object
+
+      required:
+        - logId
+        - cardId
+        - gateId
+        - direction
+        - status
+        - timestamp
+
+      properties:
+        logId:
+          type: string
+          format: uuid
+
+        cardId:
+          type: string
+          example: RFID-001
+
+        gateId:
+          type: string
+          example: GATE-01
+
+        direction:
+          type: string
+          enum:
+            - IN
+            - OUT
+
+        status:
+          type: string
+          enum:
+            - ALLOW
+            - DENY
+
+        timestamp:
+          type: string
+          format: date-time
+
+        operatorNote:
+          type:
+            - string
+            - "null"
+
+    GateStatus:
+      type: object
+
+      required:
+        - gateId
+        - status
+
+      properties:
+        gateId:
+          type: string
+          example: GATE-01
+
+        status:
+          type: string
+          enum:
+            - OPEN
+            - CLOSED
+            - MAINTENANCE
+
+        lastUpdated:
+          type: string
+          format: date-time
+
+    CardInfo:
+      type: object
+
+      required:
+        - cardId
+        - ownerName
+        - cardStatus
+
+      properties:
+        cardId:
+          type: string
+          example: RFID-001
+
+        ownerName:
+          type: string
+          example: Nguyen Van A
+
+        cardStatus:
+          type: string
+          enum:
+            - ACTIVE
+            - BLOCKED
+            - EXPIRED
+
+        expiresAt:
+          type:
+            - string
+            - "null"
+          format: date-time
+
     HealthStatus:
       type: object
-      additionalProperties: false
-      required: [status, service, time]
+
       properties:
         status:
           type: string
-          enum: [ok]
-          description: Health status.
-          example: ok
-        service:
-          type: string
-          minLength: 2
-          maxLength: 80
-          description: Service name.
-          example: iot-core-sensor-contract
-        time:
+          example: OK
+
+        timestamp:
           type: string
           format: date-time
-          description: Health check time.
-          example: '2026-05-18T01:30:00Z'
-
-    SensorEvent:
-      oneOf:
-        - $ref: '#/components/schemas/SensorReadingCreatedEvent'
-        - $ref: '#/components/schemas/SensorThresholdExceededEvent'
-      discriminator:
-        propertyName: eventType
-        mapping:
-          sensor.reading.created: '#/components/schemas/SensorReadingCreatedEvent'
-          sensor.threshold.exceeded: '#/components/schemas/SensorThresholdExceededEvent'
-
-    SensorReadingCreatedEvent:
-      type: object
-      additionalProperties: false
-      required:
-        - eventType
-        - eventId
-        - deviceId
-        - sensorType
-        - value
-        - unit
-        - quality
-        - occurredAt
-        - correlationId
-        - idempotencyKey
-        - source
-      properties:
-        eventType:
-          type: string
-          const: sensor.reading.created
-          description: Discriminator value for a normal sensor reading.
-          example: sensor.reading.created
-        eventId:
-          type: string
-          format: uuid
-          description: Globally unique event id.
-          example: 550e8400-e29b-41d4-a716-446655440001
-        deviceId:
-          type: string
-          pattern: '^SENSOR-[0-9]{3}$'
-          description: Physical sensor identifier.
-          example: SENSOR-101
-        sensorType:
-          $ref: '#/components/schemas/SensorType'
-        value:
-          type: number
-          minimum: -100
-          maximum: 10000
-          description: Measured sensor value.
-          example: 38.6
-        unit:
-          $ref: '#/components/schemas/SensorUnit'
-        locationId:
-          type: [string, 'null']
-          minLength: 2
-          maxLength: 80
-          description: Campus location, null if the device is not mapped yet.
-          example: B1-F02-R204
-        floor:
-          type: [string, 'null']
-          minLength: 1
-          maxLength: 20
-          description: Building floor, null if unknown.
-          example: F02
-        quality:
-          type: string
-          enum: [NORMAL, SUSPECT, INVALID]
-          description: Reading quality classification from IoT Ingestion.
-          example: NORMAL
-        occurredAt:
-          type: string
-          format: date-time
-          description: Time when the device observed the value.
-          example: '2026-05-18T01:25:00Z'
-        correlationId:
-          type: string
-          format: uuid
-          description: Correlation id propagated across services.
-          example: 550e8400-e29b-41d4-a716-446655440101
-        idempotencyKey:
-          type: string
-          minLength: 10
-          maxLength: 160
-          description: Stable key used by Core Business to deduplicate retries.
-          example: SENSOR-101:2026-05-18T01:25:00Z:temperature
-        source:
-          type: string
-          const: iot-ingestion
-          description: Event producer service.
-          example: iot-ingestion
-
-    SensorThresholdExceededEvent:
-      type: object
-      additionalProperties: false
-      required:
-        - eventType
-        - eventId
-        - deviceId
-        - sensorType
-        - value
-        - unit
-        - thresholdId
-        - thresholdValue
-        - severity
-        - occurredAt
-        - correlationId
-        - idempotencyKey
-        - source
-      properties:
-        eventType:
-          type: string
-          const: sensor.threshold.exceeded
-          description: Discriminator value for a threshold breach.
-          example: sensor.threshold.exceeded
-        eventId:
-          type: string
-          format: uuid
-          description: Globally unique event id.
-          example: 550e8400-e29b-41d4-a716-446655440002
-        deviceId:
-          type: string
-          pattern: '^SENSOR-[0-9]{3}$'
-          description: Physical sensor identifier.
-          example: SENSOR-203
-        sensorType:
-          $ref: '#/components/schemas/SensorType'
-        value:
-          type: number
-          minimum: -100
-          maximum: 10000
-          description: Measured sensor value that crossed the threshold.
-          example: 1
-        unit:
-          $ref: '#/components/schemas/SensorUnit'
-        locationId:
-          type: [string, 'null']
-          minLength: 2
-          maxLength: 80
-          description: Campus location, null if the device is not mapped yet.
-          example: B2-F01-LAB
-        thresholdId:
-          type: string
-          minLength: 3
-          maxLength: 80
-          description: Identifier of the threshold rule.
-          example: smoke-default-v1
-        thresholdValue:
-          type: number
-          minimum: -100
-          maximum: 10000
-          description: Threshold value agreed by IoT and Core Business.
-          example: 0
-        severity:
-          $ref: '#/components/schemas/EventSeverity'
-        policyHint:
-          type: [string, 'null']
-          minLength: 2
-          maxLength: 80
-          description: Optional policy hint for Core Business.
-          example: evacuate-zone
-        occurredAt:
-          type: string
-          format: date-time
-          description: Time when the device observed the breach.
-          example: '2026-05-18T01:26:00Z'
-        correlationId:
-          type: string
-          format: uuid
-          description: Correlation id propagated across services.
-          example: 550e8400-e29b-41d4-a716-446655440102
-        idempotencyKey:
-          type: string
-          minLength: 10
-          maxLength: 160
-          description: Stable key used by Core Business to deduplicate retries.
-          example: SENSOR-203:2026-05-18T01:26:00Z:smoke
-        source:
-          type: string
-          const: iot-ingestion
-          description: Event producer service.
-          example: iot-ingestion
-
-    SensorType:
-      type: string
-      enum: [temperature, humidity, smoke, pm25, co2, motion]
-      description: Supported sensor metric.
-      example: temperature
-
-    SensorUnit:
-      type: string
-      enum: [celsius, percent, ppm, ugm3, boolean]
-      description: Unit for the sensor value.
-      example: celsius
-
-    EventSeverity:
-      type: string
-      enum: [LOW, MEDIUM, HIGH, CRITICAL]
-      description: Business severity after threshold evaluation.
-      example: CRITICAL
-
-    SensorEventAccepted:
-      type: object
-      additionalProperties: false
-      required: [eventId, status, acceptedAt, idempotencyKey, queueTopic, retryAfterSeconds]
-      properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Event id accepted by Core Business.
-          example: 550e8400-e29b-41d4-a716-446655440001
-        status:
-          type: string
-          enum: [ACCEPTED]
-          description: Intake status.
-          example: ACCEPTED
-        acceptedAt:
-          type: string
-          format: date-time
-          description: Time Core Business accepted the event.
-          example: '2026-05-18T01:25:02Z'
-        idempotencyKey:
-          type: string
-          minLength: 10
-          maxLength: 160
-          description: Deduplication key echoed to the producer.
-          example: SENSOR-101:2026-05-18T01:25:00Z:temperature
-        queueTopic:
-          type: string
-          minLength: 3
-          maxLength: 80
-          description: Queue topic that carries this contract.
-          example: sensor.events.v1
-        retryAfterSeconds:
-          type: [integer, 'null']
-          minimum: 1
-          maximum: 3600
-          description: Retry hint when throttled, null for normal acceptance.
-          example: null
-
-    SensorEventStatus:
-      type: object
-      additionalProperties: false
-      required: [eventId, status, receivedAt, processedAt, result, duplicate]
-      properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Sensor event id.
-          example: 550e8400-e29b-41d4-a716-446655440001
-        status:
-          type: string
-          enum: [ACCEPTED, PROCESSED, REJECTED, DUPLICATE]
-          description: Current processing status.
-          example: PROCESSED
-        receivedAt:
-          type: string
-          format: date-time
-          description: Time the event reached Core Business.
-          example: '2026-05-18T01:25:02Z'
-        processedAt:
-          type: [string, 'null']
-          format: date-time
-          description: Processing finish time, null if pending.
-          example: '2026-05-18T01:25:05Z'
-        result:
-          type: [string, 'null']
-          enum: [POLICY_OK, ALERT_CREATED, IGNORED_TOO_OLD, REJECTED_SCHEMA, null]
-          description: Business processing result.
-          example: POLICY_OK
-        duplicate:
-          type: boolean
-          description: True when the idempotency key was already processed.
-          example: false
-
-    SensorEventSummary:
-      type: object
-      additionalProperties: false
-      required: [eventId, eventType, deviceId, sensorType, locationId, severity, occurredAt, status]
-      properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Sensor event id.
-          example: 550e8400-e29b-41d4-a716-446655440001
-        eventType:
-          type: string
-          enum: [sensor.reading.created, sensor.threshold.exceeded]
-          description: Event type.
-          example: sensor.reading.created
-        deviceId:
-          type: string
-          pattern: '^SENSOR-[0-9]{3}$'
-          description: Physical sensor identifier.
-          example: SENSOR-101
-        sensorType:
-          $ref: '#/components/schemas/SensorType'
-        locationId:
-          type: [string, 'null']
-          minLength: 2
-          maxLength: 80
-          description: Campus location, null if unknown.
-          example: B1-F02-R204
-        severity:
-          type: [string, 'null']
-          enum: [LOW, MEDIUM, HIGH, CRITICAL, null]
-          description: Severity for threshold events, null for normal readings.
-          example: null
-        occurredAt:
-          type: string
-          format: date-time
-          description: Time when the event occurred.
-          example: '2026-05-18T01:25:00Z'
-        status:
-          type: string
-          enum: [ACCEPTED, PROCESSED, REJECTED, DUPLICATE]
-          description: Current processing status.
-          example: ACCEPTED
-
-    SensorEventPage:
-      type: object
-      additionalProperties: false
-      required: [items, nextCursor, hasMore]
-      properties:
-        items:
-          type: array
-          minItems: 0
-          maxItems: 100
-          items:
-            $ref: '#/components/schemas/SensorEventSummary'
-        nextCursor:
-          type: [string, 'null']
-          description: Cursor for the next page, null when there is no next page.
-          example: null
-        hasMore:
-          type: boolean
-          description: True when another page is available.
-          example: false
-
-    EventContract:
-      type: object
-      additionalProperties: false
-      required: [version, topic, producer, consumer, events, retryPolicy, deadLetterTopic]
-      properties:
-        version:
-          type: string
-          pattern: '^[0-9]+\.[0-9]+\.[0-9]+$'
-          description: Contract version.
-          example: 1.0.0
-        topic:
-          type: string
-          minLength: 3
-          maxLength: 80
-          description: Primary queue topic.
-          example: sensor.events.v1
-        producer:
-          type: string
-          enum: [iot-ingestion]
-          description: Event producer.
-          example: iot-ingestion
-        consumer:
-          type: string
-          enum: [core-business]
-          description: Event consumer.
-          example: core-business
-        events:
-          type: array
-          minItems: 1
-          maxItems: 10
-          items:
-            $ref: '#/components/schemas/EventContractItem'
-        retryPolicy:
-          type: string
-          enum: [at-least-once]
-          description: Delivery and retry assumption for Lab 02.
-          example: at-least-once
-        deadLetterTopic:
-          type: string
-          minLength: 3
-          maxLength: 80
-          description: Topic for messages that cannot be processed.
-          example: sensor.events.dlq.v1
-
-    EventContractItem:
-      type: object
-      additionalProperties: false
-      required: [eventType, purpose]
-      properties:
-        eventType:
-          type: string
-          enum: [sensor.reading.created, sensor.threshold.exceeded]
-          description: Negotiated event name.
-          example: sensor.reading.created
-        purpose:
-          type: string
-          minLength: 5
-          maxLength: 200
-          description: Business purpose of the event.
-          example: New sensor reading for policy evaluation.
 
     Problem:
       type: object
-      additionalProperties: false
-      required: [type, title, status]
+
+      required:
+        - type
+        - title
+        - status
+
       properties:
         type:
           type: string
           format: uri
-          description: URI identifying the problem type.
-          example: https://campus.local/errors/validation
+          example: https://example.com/problems/general
+
         title:
           type: string
-          minLength: 3
-          maxLength: 120
-          description: Short problem title.
-          example: Invalid request payload
+
         status:
           type: integer
-          minimum: 400
-          maximum: 599
-          description: HTTP status code.
-          example: 400
-        detail:
-          type: [string, 'null']
-          maxLength: 500
-          description: Human-readable details.
-          example: Field deviceId must match SENSOR-NNN.
-        instance:
-          type: [string, 'null']
-          format: uri-reference
-          description: URI of the request that caused the error.
-          example: /sensor-events
-        errors:
-          type: array
-          minItems: 0
-          maxItems: 50
-          items:
-            $ref: '#/components/schemas/ValidationError'
 
-    ValidationError:
-      type: object
-      additionalProperties: false
-      required: [field, code, message]
-      properties:
-        field:
-          type: string
-          minLength: 1
-          maxLength: 80
-          description: Payload field that failed validation.
-          example: deviceId
-        code:
-          type: string
-          minLength: 2
-          maxLength: 80
-          description: Machine-readable validation code.
-          example: PATTERN_MISMATCH
-        message:
-          type: string
-          minLength: 3
-          maxLength: 200
-          description: Human-readable validation message.
-          example: deviceId must match SENSOR-NNN.
+        detail:
+          type:
+            - string
+            - "null"
+
+        instance:
+          type:
+            - string
+            - "null"
 
   responses:
+
     BadRequest:
-      description: Payload syntax or schema is invalid.
+      description: Invalid payload
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/Problem'
-          example:
-            type: https://campus.local/errors/validation
-            title: Invalid request payload
-            status: 400
-            detail: Field deviceId must match SENSOR-NNN.
-            instance: /sensor-events
-            errors:
-              - field: deviceId
-                code: PATTERN_MISMATCH
-                message: deviceId must match SENSOR-NNN.
 
     Unauthorized:
-      description: Missing or invalid bearer token.
+      description: Unauthorized request
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/Problem'
-          example:
-            type: https://campus.local/errors/unauthorized
-            title: Unauthorized
-            status: 401
-            detail: Missing Bearer token.
-            instance: /sensor-events
-            errors: []
 
     Forbidden:
-      description: Authenticated caller does not have permission.
+      description: Forbidden
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/Problem'
-          example:
-            type: https://campus.local/errors/forbidden
-            title: Forbidden
-            status: 403
-            detail: Token scope cannot publish sensor events.
-            instance: /sensor-events
-            errors: []
 
     NotFound:
-      description: Requested event does not exist.
+      description: Resource not found
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/Problem'
-          example:
-            type: https://campus.local/errors/not-found
-            title: Event not found
-            status: 404
-            detail: No sensor event exists for the supplied eventId.
-            instance: /sensor-events/550e8400-e29b-41d4-a716-446655449999
-            errors: []
 
     Conflict:
-      description: Duplicate idempotency key or conflicting event state.
+      description: Conflict
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/Problem'
-          example:
-            type: https://campus.local/errors/conflict
-            title: Duplicate event
-            status: 409
-            detail: The idempotencyKey was already accepted with another eventId.
-            instance: /sensor-events
-            errors:
-              - field: idempotencyKey
-                code: DUPLICATE_KEY
-                message: Use the same eventId when retrying the same reading.
 
     UnprocessableEntity:
-      description: Payload is valid JSON but violates business rules.
+      description: Invalid business rule
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/Problem'
-          example:
-            type: https://campus.local/errors/business-rule
-            title: Business rule violation
-            status: 422
-            detail: Threshold event must include a thresholdId and severity.
-            instance: /sensor-events
-            errors:
-              - field: thresholdId
-                code: REQUIRED_FOR_THRESHOLD_EVENT
-                message: thresholdId is required for sensor.threshold.exceeded.
 
     InternalServerError:
-      description: Unexpected server error.
+      description: Internal server error
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/Problem'
-          example:
-            type: https://campus.local/errors/internal
-            title: Internal server error
-            status: 500
-            detail: Core Business could not enqueue the event.
-            instance: /sensor-events
-            errors: []
