@@ -1,0 +1,77 @@
+[Lab02] Testing Prism mock server at http://localhost:4010
+
+[1/5] Happy path: GET /health
+HTTP/1.1 200 OK
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Headers: *
+Access-Control-Allow-Credentials: true
+Access-Control-Expose-Headers: *
+Content-type: application/json
+Content-Length: 82
+Date: Mon, 18 May 2026 01:36:21 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"status":"ok","service":"iot-core-sensor-contract","time":"2026-05-18T01:30:00Z"}
+
+---
+[2/5] Happy path: GET /event-contract
+HTTP/1.1 200 OK
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Headers: *
+Access-Control-Allow-Credentials: true
+Access-Control-Expose-Headers: *
+Content-type: application/json
+Content-Length: 374
+Date: Mon, 18 May 2026 01:36:21 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"version":"1.0.0","topic":"sensor.events.v1","producer":"iot-ingestion","consumer":"core-business","events":[{"eventType":"sensor.reading.created","purpose":"New sensor reading for policy evaluation."},{"eventType":"sensor.threshold.exceeded","purpose":"Sensor value crossed a negotiated threshold."}],"retryPolicy":"at-least-once","deadLetterTopic":"sensor.events.dlq.v1"}
+
+---
+[3/5] Happy path: POST /sensor-events
+HTTP/1.1 202 Accepted
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Headers: *
+Access-Control-Allow-Credentials: true
+Access-Control-Expose-Headers: *
+Location: ../dictionary
+Content-type: application/json
+Content-Length: 226
+Date: Mon, 18 May 2026 01:36:21 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"eventId":"550e8400-e29b-41d4-a716-446655440001","status":"ACCEPTED","acceptedAt":"2026-05-18T01:25:02Z","idempotencyKey":"SENSOR-101:2026-05-18T01:25:00Z:temperature","queueTopic":"sensor.events.v1","retryAfterSeconds":null}
+
+---
+[4/5] Happy path: GET /sensor-events/{eventId}
+HTTP/1.1 200 OK
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Headers: *
+Access-Control-Allow-Credentials: true
+Access-Control-Expose-Headers: *
+Content-type: application/json
+Content-Length: 183
+Date: Mon, 18 May 2026 01:36:22 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"eventId":"550e8400-e29b-41d4-a716-446655440001","status":"PROCESSED","receivedAt":"2026-05-18T01:25:02Z","processedAt":"2026-05-18T01:25:05Z","result":"POLICY_OK","duplicate":false}
+
+---
+[5/5] Error case: POST /sensor-events invalid payload
+HTTP/1.1 422 Unprocessable Entity
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Headers: *
+Access-Control-Allow-Credentials: true
+Access-Control-Expose-Headers: *
+sl-violations: [{"location":["request","body"],"severity":"Error","code":"required","message":"Request body must have required property 'eventId'"},{"location":["request","body"],"severity":"Error","code":"required","message":"Request body must have required property 'sensorType'"},{"location":["request","body"],"severity":"Error","code":"required","message":"Request body must have required property 'value'"},{"location":["request","body"],"severity":"Error","code":"required","message":"Request body must have required property 'unit'"},{"location":["request","body"],"severity":"Error","code":"required","message":"Request body must have required property 'quality'"},{"location":["request","body"],"severity":"Error","code":"required","message":"Request body must have required property 'occurredAt'"},{"location":["request","body"],"severity":"Error","code":"required","message":"Request body must have required property 'correlationId'"},{"location":["request","body"],"severity":"Error","code":"required","message":"Request body must have required property 'idempotencyKey'"},{"location":["request","body"],"severity":"Error","code":"required","message":"Request body must have required property 'source'"},{"location":["request","body","deviceId"],"severity":"Error","code":"pattern","message":"Request body property deviceId must match pattern \"^SENSOR-[0-9]{3}$\""},{"location":["request","body"],"severity":"Error","code":"required","message":"Request body must have required property 'eventId'"},{"location":["request","body"],"severity":"Error","code":"required","message":"Request body must have required property 'sensorType'"},{"location":["request","body"],"severity":"Error","code":"required","message":"Request body must have required property 'value'"},{"location":["request","body"],"severity":"Error","code":"required","message":"Request body must have required property 'unit'"},{"location":["request","body"],"severity":"Error","code":"required","message":"Request body must have required property 'thresholdId'"},{"location":["request","body"],"severity":"Error","code":"required","message":"Request body must have required property 'thresholdValue'"},{"location":["request","body"],"severity":"Error","code":"required","message":"Request body must have required property 'severity'"},{"location":["request","body"],"severity":"Error","code":"required","message":"Request body must have required property 'occurredAt'"},{"location":["request","body"],"severity":"Error","code":"required","message":"Request body must have required property 'correlationId'"},{"location":["request","body"],"severity":"Error","code":"required","message":"Request body must have required property 'idempotencyKey'"},{"location":["request","body"],"severity":"Error","code":"required","message":"Request body must have required property 'source'"},{"location":["request","body","eventType"],"severity":"Error","code":"const","message":"Request body property eventType must be equal to constant"},{"location":["request","body","deviceId"],"severity":"Error","code":"pattern","message":"Request body property deviceId must match pattern \"^SENSOR-[0-9]{3}$\""},{"location":["request","body"],"severity":"Error","code":"oneOf","message":"Request body must match exactly one schema in oneOf"}]
+Content-type: application/problem+json
+Content-Length: 335
+Date: Mon, 18 May 2026 01:36:22 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"type":"https://campus.local/errors/business-rule","title":"Business rule violation","status":422,"detail":"Threshold event must include a thresholdId and severity.","instance":"/sensor-events","errors":[{"field":"thresholdId","code":"REQUIRED_FOR_THRESHOLD_EVENT","message":"thresholdId is required for sensor.threshold.exceeded."}]}

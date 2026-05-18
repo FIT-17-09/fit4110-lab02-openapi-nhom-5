@@ -1,0 +1,86 @@
+[08:36:06] » [CLI] ...  awaiting  Starting Prism…
+[08:36:06] » [CLI] i  info      GET        http://127.0.0.1:4010/health
+[08:36:06] » [CLI] i  info      POST       http://127.0.0.1:4010/sensor-events
+[08:36:07] » [CLI] i  info      GET        http://127.0.0.1:4010/sensor-events/recent
+[08:36:07] » [CLI] i  info      GET        http://127.0.0.1:4010/sensor-events/973d62ab-b570-1c54-5643-f90a5fd90ad6
+[08:36:07] » [CLI] i  info      GET        http://127.0.0.1:4010/event-contract
+[08:36:07] » [CLI] ►  start     Prism is listening on http://127.0.0.1:4010
+[08:36:21] » [HTTP SERVER] get /health i  info      Request received
+[08:36:21] »     [NEGOTIATOR] i  info      Request contains an accept header: */*
+[08:36:21] »     [VALIDATOR] √  success   The request passed the validation rules. Looking for the best response
+[08:36:21] »     [NEGOTIATOR] √  success   Found a compatible content for */*
+[08:36:21] »     [NEGOTIATOR] √  success   Responding with the requested status code 200
+[08:36:21] »     [NEGOTIATOR] i  info      > Responding with "200"
+[08:36:21] » [HTTP SERVER] get /event-contract i  info      Request received
+[08:36:21] »     [NEGOTIATOR] i  info      Request contains an accept header: */*
+[08:36:21] »     [VALIDATOR] √  success   The request passed the validation rules. Looking for the best response
+[08:36:21] »     [NEGOTIATOR] √  success   Found a compatible content for */*
+[08:36:21] »     [NEGOTIATOR] √  success   Responding with the requested status code 200
+[08:36:21] »     [NEGOTIATOR] i  info      > Responding with "200"
+[08:36:21] » [HTTP SERVER] post /sensor-events i  info      Request received
+[08:36:21] »     [NEGOTIATOR] i  info      Request contains an accept header: */*
+[08:36:21] »     [VALIDATOR] √  success   The request passed the validation rules. Looking for the best response
+[08:36:21] »     [NEGOTIATOR] √  success   Found a compatible content for */*
+[08:36:21] »     [NEGOTIATOR] √  success   Responding with the requested status code 202
+[08:36:21] »     [NEGOTIATOR] i  info      > Responding with "202"
+[08:36:22] » [HTTP SERVER] get /sensor-events/550e8400-e29b-41d4-a716-446655440001 i  info      Request received
+[08:36:22] »     [NEGOTIATOR] i  info      Request contains an accept header: */*
+[08:36:22] »     [VALIDATOR] √  success   The request passed the validation rules. Looking for the best response
+[08:36:22] »     [NEGOTIATOR] √  success   Found a compatible content for */*
+[08:36:22] »     [NEGOTIATOR] √  success   Responding with the requested status code 200
+[08:36:22] »     [NEGOTIATOR] i  info      > Responding with "200"
+[08:36:22] » [HTTP SERVER] post /sensor-events i  info      Request received
+[08:36:22] »     [NEGOTIATOR] i  info      Request contains an accept header: */*
+[08:36:22] »     [VALIDATOR] ‼  warning   Request did not pass the validation rules
+[08:36:22] »     [VALIDATOR] ×  error     Request body must have required property 'eventId'
+[08:36:22] »     [VALIDATOR] ×  error     Request body must have required property 'sensorType'
+[08:36:22] »     [VALIDATOR] ×  error     Request body must have required property 'value'
+[08:36:22] »     [VALIDATOR] ×  error     Request body must have required property 'unit'
+[08:36:22] »     [VALIDATOR] ×  error     Request body must have required property 'quality'
+[08:36:22] »     [VALIDATOR] ×  error     Request body must have required property 'occurredAt'
+[08:36:22] »     [VALIDATOR] ×  error     Request body must have required property 'correlationId'
+[08:36:22] »     [VALIDATOR] ×  error     Request body must have required property 'idempotencyKey'
+[08:36:22] »     [VALIDATOR] ×  error     Request body must have required property 'source'
+[08:36:22] »     [VALIDATOR] ×  error     Request body property deviceId must match pattern "^SENSOR-[0-9]{3}$"
+[08:36:22] »     [VALIDATOR] ×  error     Request body must have required property 'eventId'
+[08:36:22] »     [VALIDATOR] ×  error     Request body must have required property 'sensorType'
+[08:36:22] »     [VALIDATOR] ×  error     Request body must have required property 'value'
+[08:36:22] »     [VALIDATOR] ×  error     Request body must have required property 'unit'
+[08:36:22] »     [VALIDATOR] ×  error     Request body must have required property 'thresholdId'
+[08:36:22] »     [VALIDATOR] ×  error     Request body must have required property 'thresholdValue'
+[08:36:22] »     [VALIDATOR] ×  error     Request body must have required property 'severity'
+[08:36:22] »     [VALIDATOR] ×  error     Request body must have required property 'occurredAt'
+[08:36:22] »     [VALIDATOR] ×  error     Request body must have required property 'correlationId'
+[08:36:22] »     [VALIDATOR] ×  error     Request body must have required property 'idempotencyKey'
+[08:36:22] »     [VALIDATOR] ×  error     Request body must have required property 'source'
+[08:36:22] »     [VALIDATOR] ×  error     Request body property eventType must be equal to constant
+[08:36:22] »     [VALIDATOR] ×  error     Request body property deviceId must match pattern "^SENSOR-[0-9]{3}$"
+[08:36:22] »     [VALIDATOR] ×  error     Request body must match exactly one schema in oneOf
+[08:36:22] »     [NEGOTIATOR] √  success   Found response 422. I'll try with it.
+[08:36:22] »     [NEGOTIATOR] √  success   The response 422 has an example. I'll keep going with this one
+[08:36:22] »     [NEGOTIATOR] √  success   Responding with the requested status code 422
+[08:36:22] »     [NEGOTIATOR] i  info      > Responding with "422"
+[08:36:22] »     [VALIDATOR] ×  error     Violation: request.body Request body must have required property 'eventId'
+[08:36:22] »     [VALIDATOR] ×  error     Violation: request.body Request body must have required property 'sensorType'
+[08:36:22] »     [VALIDATOR] ×  error     Violation: request.body Request body must have required property 'value'
+[08:36:22] »     [VALIDATOR] ×  error     Violation: request.body Request body must have required property 'unit'
+[08:36:22] »     [VALIDATOR] ×  error     Violation: request.body Request body must have required property 'quality'
+[08:36:22] »     [VALIDATOR] ×  error     Violation: request.body Request body must have required property 'occurredAt'
+[08:36:22] »     [VALIDATOR] ×  error     Violation: request.body Request body must have required property 'correlationId'
+[08:36:22] »     [VALIDATOR] ×  error     Violation: request.body Request body must have required property 'idempotencyKey'
+[08:36:22] »     [VALIDATOR] ×  error     Violation: request.body Request body must have required property 'source'
+[08:36:22] »     [VALIDATOR] ×  error     Violation: request.body.deviceId Request body property deviceId must match pattern "^SENSOR-[0-9]{3}$"
+[08:36:22] »     [VALIDATOR] ×  error     Violation: request.body Request body must have required property 'eventId'
+[08:36:22] »     [VALIDATOR] ×  error     Violation: request.body Request body must have required property 'sensorType'
+[08:36:22] »     [VALIDATOR] ×  error     Violation: request.body Request body must have required property 'value'
+[08:36:22] »     [VALIDATOR] ×  error     Violation: request.body Request body must have required property 'unit'
+[08:36:22] »     [VALIDATOR] ×  error     Violation: request.body Request body must have required property 'thresholdId'
+[08:36:22] »     [VALIDATOR] ×  error     Violation: request.body Request body must have required property 'thresholdValue'
+[08:36:22] »     [VALIDATOR] ×  error     Violation: request.body Request body must have required property 'severity'
+[08:36:22] »     [VALIDATOR] ×  error     Violation: request.body Request body must have required property 'occurredAt'
+[08:36:22] »     [VALIDATOR] ×  error     Violation: request.body Request body must have required property 'correlationId'
+[08:36:22] »     [VALIDATOR] ×  error     Violation: request.body Request body must have required property 'idempotencyKey'
+[08:36:22] »     [VALIDATOR] ×  error     Violation: request.body Request body must have required property 'source'
+[08:36:22] »     [VALIDATOR] ×  error     Violation: request.body.eventType Request body property eventType must be equal to constant
+[08:36:22] »     [VALIDATOR] ×  error     Violation: request.body.deviceId Request body property deviceId must match pattern "^SENSOR-[0-9]{3}$"
+[08:36:22] »     [VALIDATOR] ×  error     Violation: request.body Request body must match exactly one schema in oneOf

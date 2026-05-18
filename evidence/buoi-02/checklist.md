@@ -1,24 +1,24 @@
 # Checklist Lab 02
 
-- [ ] Đã xác định đúng cặp đàm phán.
-- [ ] Đã đọc đúng user story trong thư mục `user-stories/`.
-- [ ] Provider đã điền `docs/analysis-provider.md`.
-- [ ] Consumer đã điền `docs/analysis-consumer.md`.
-- [ ] `openapi.yaml` khai báo `openapi: 3.1.0`.
-- [ ] Có tối thiểu 4 path.
-- [ ] Mỗi operation có `operationId`, `summary`, `description`, `tags`.
-- [ ] Schema lớn đã đưa vào `components/schemas`.
-- [ ] Có `oneOf` + `discriminator`.
-- [ ] Có union type với `null`, không dùng `nullable: true`.
-- [ ] Có `Problem` schema cho response lỗi.
-- [ ] `spectral lint` không có severity error.
-- [ ] Đã lưu `evidence/buoi-02/spectral-report.txt`.
-- [ ] Prism mock server chạy được ở port 4010.
-- [ ] Có 5 ảnh request mẫu trong `mock-screenshots/`.
-- [ ] `negotiation-log.md` có tối thiểu 6 issue.
-- [ ] Có sign-off Provider, Consumer, Witness.
-- [ ] Đã hoàn thiện `VERSIONING.md` cho bài tập về nhà.
+- [x] Da xac dinh dung cap dam phan: #5 IoT Ingestion -> Core Business.
+- [x] Da doc dung user story: `user-stories/pair-05-iot-core-async.md`.
+- [x] Provider da dien `docs/analysis-provider.md`.
+- [x] Consumer da dien `docs/analysis-consumer.md`.
+- [x] `openapi.yaml` khai bao `openapi: 3.1.0`.
+- [x] Co toi thieu 4 path: `/health`, `/sensor-events`, `/sensor-events/recent`, `/sensor-events/{eventId}`, `/event-contract`.
+- [x] Moi operation co `operationId`, `summary`, `description`, `tags`.
+- [x] Schema lon da dua vao `components/schemas`.
+- [x] Co `oneOf` + `discriminator` cho `SensorEvent`.
+- [x] Co union type voi `null`, khong dung `nullable: true`.
+- [x] Co `Problem` schema cho response loi.
+- [x] `spectral lint` khong co severity error.
+- [x] Da luu `evidence/buoi-02/spectral-report.txt`.
+- [x] Prism mock server chay duoc o port 4010.
+- [x] Co 5 anh request mau trong `mock-screenshots/`.
+- [x] `negotiation-log.md` co toi thieu 6 issue.
+- [x] Co sign-off Provider, Consumer, Witness.
+- [x] Da hoan thien `VERSIONING.md` cho bai tap ve nha.
 
-Ghi chú Lab 02:
-- Lab 02 nối tiếp trực tiếp Lab 01: chuyển `service-boundary.md` thành `openapi.yaml`.
-- Xem bản đồ phụ thuộc đầy đủ tại `docs/dependency-map.md` để chọn cặp đàm phán.
+Ghi chu Lab 02:
+- Lab 02 noi tiep Lab 01: chuyen service boundary thanh `openapi.yaml`.
+- Da tham chieu dependency map/pairing matrix de chon cap dam phan #5.
